@@ -11,13 +11,32 @@ public class AccountThread extends Thread {
 
     @Override
     public void run() {
-        synchronized (accountFrom) {
-            synchronized (accountTo) {
-                for (int i = 0; i < 2000; i++) {
-                    if (accountFrom.takeOff(10)) {
-                        accountTo.add(10);
-                    }
+        for (int i = 0; i < 2000; i++) {
+            lockAccounts();
+            try {
+                if (accountFrom.takeOff(10)) {
+                    accountTo.add(10);
                 }
+            }finally {
+                accountTo.getLock().unlock();
+                accountFrom.getLock().unlock();
+            }
+
+        }
+    }
+
+    private void lockAccounts() {
+        while (true){
+            boolean fromLockResult = accountFrom.getLock().tryLock();
+            boolean toLockResult = accountFrom.getLock().tryLock();
+            if (fromLockResult&&toLockResult){
+                break;
+            }
+            if (fromLockResult){
+                accountFrom.getLock().unlock();
+            }
+            if (toLockResult){
+                accountTo.getLock().unlock();
             }
         }
     }

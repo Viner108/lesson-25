@@ -1,33 +1,26 @@
 package com.dmdev.lesson25.queue;
 
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 
 public class BuyerThread implements Runnable {
-    private final Queue<Cashbox> cashboxes;
+    private final Semaphore cashboxes;
 
-    public BuyerThread(Queue<Cashbox> cashboxes) {
+    public BuyerThread(Semaphore cashboxes) {
         this.cashboxes = cashboxes;
     }
 
     @Override
     public void run() {
         try {
-            synchronized (cashboxes) {
-                while (true) {
-                    if (!cashboxes.isEmpty()) {
-                        Cashbox cashbox = cashboxes.remove();
-                        System.out.println(Thread.currentThread().getName() + " обслуживается в кассе " + cashbox);
-                        cashboxes.wait(5L);
-                        System.out.println(Thread.currentThread().getName() + " освобождает кассу " + cashbox);
-                        cashboxes.add(cashbox);
-                        cashboxes.notifyAll();
-                        break;
-                    } else {
-                        System.out.println(Thread.currentThread().getName() + " ожидает свободную кассу");
-                        cashboxes.wait();
-                    }
-                }
-            }
+            cashboxes.acquire();
+
+            System.out.println(Thread.currentThread().getName() + " обслуживается в какой-то кассе ");
+            Thread.sleep(5L);
+            System.out.println(Thread.currentThread().getName() + " освобождает какую-то кассу ");
+
+            cashboxes.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
